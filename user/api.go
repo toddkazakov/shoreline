@@ -453,7 +453,7 @@ func (a *Api) DeleteUser(res http.ResponseWriter, req *http.Request, vars map[st
 	} else {
 		id = td.UserId
 	}
-	a.logger.Printf("Users: %s, %s" originUser, toDelete)
+	a.logger.Printf("Users: %v, %v", originUser, originUser)
 	pw := getGivenDetail(req)["password"]
 
 	if id != "" && pw != "" {

@@ -148,7 +148,7 @@ type MockManager struct {
 func (U *MockManager) CreateListMembershipForUser(newUser marketo.User) {
 
 }
-func (U *MockManager) UpdateListMembershipForUser(oldUser marketo.User, newUser marketo.User) {
+func (U *MockManager) UpdateListMembershipForUser(oldUser marketo.User, newUser marketo.User, boolean bool) {
 
 }
 func (U *MockManager) IsAvailable() bool {
