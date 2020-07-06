@@ -375,7 +375,7 @@ func (a *Api) UpdateUser(res http.ResponseWriter, req *http.Request, vars map[st
 					if updateUserDetails.EmailVerified != nil || updateUserDetails.TermsAccepted != nil {
 						a.marketoManager.CreateListMembershipForUser(updatedUser)
 					} else {
-						a.marketoManager.UpdateListMembershipForUser(originalUser, updatedUser)
+						a.marketoManager.UpdateListMembershipForUser(originalUser, updatedUser, false)
 					}
 				} else {
 					failedMarketoUploadCount.Inc()
@@ -436,6 +436,14 @@ func (a *Api) DeleteUser(res http.ResponseWriter, req *http.Request, vars map[st
 		a.logger.Println(http.StatusUnauthorized, err.Error())
 		res.WriteHeader(http.StatusUnauthorized)
 		return
+	} 
+	originUser, err := a.Store.WithContext(req.Context()).FindUser(&User{Id: firstStringNotEmpty(vars["userid"], td.UserId)}); 
+	
+	if err != nil {
+		a.sendError(res, http.StatusInternalServerError, STATUS_ERR_FINDING_USR, err)
+
+	} else if originUser == nil {
+		a.sendError(res, http.StatusUnauthorized, STATUS_UNAUTHORIZED, "User not found")
 	}
 
 	var id string
@@ -445,7 +453,7 @@ func (a *Api) DeleteUser(res http.ResponseWriter, req *http.Request, vars map[st
 	} else {
 		id = td.UserId
 	}
-
+	a.logger.Printf("Users: %s, %s" originUser, toDelete)
 	pw := getGivenDetail(req)["password"]
 
 	if id != "" && pw != "" {
@@ -454,6 +462,10 @@ func (a *Api) DeleteUser(res http.ResponseWriter, req *http.Request, vars map[st
 		toDelete := &User{Id: id}
 
 		if err = toDelete.HashPassword(pw, a.ApiConfig.Salt); err == nil {
+			
+			
+			a.marketoManager.UpdateListMembershipForUser(originUser, toDelete, true)
+
 			if err = a.Store.WithContext(req.Context()).RemoveUser(toDelete); err == nil {
 
 				if td.IsServer {
